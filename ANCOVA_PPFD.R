@@ -1,7 +1,7 @@
 # Program Title: ANCOVA Analysis
 # Author: Benjamin D. Miller
-# Date Started: Nov/21/2018
-# Date Revised: May/18/2019
+# Date Started: 20181121
+# Date Revised: 20190518
 # Program Description: Performs ANCOVA Analysis for PPFD values grouped by
 # Top and Middle PAR measurements. Also performs ANCOVA analysis for canopy
 # leaf and air temperature grouped by Top-canopy, Understory and Mid-canopy.
@@ -71,7 +71,7 @@ ppfd_delta <- ggplot(data = (ppfd_df),
                        color = group)) +
   theme_classic() +
   theme(text = element_text(size = 28))+
-  labs(x = bquote("PPFD" ~ umol/s/m^2), y = expression(Delta*"T (°C)"),
+  labs(x = bquote("PPFD" ~ umol/s/m^2), y = expression(Delta*"T (?C)"),
        color = "Sensor Group") +
   scale_color_discrete() +
   geom_point(na.rm = TRUE, size = 3, stroke = 1.5)+
@@ -85,7 +85,7 @@ ppfd_leaf <- ggplot(data = (ppfd_df),
                          color = group)) +
   theme_classic() +
   theme(text = element_text(size = 26))+
-  labs(x = bquote("PPFD" ~ umol/s/m^2), y = "Leaf Temperature (°C)",
+  labs(x = bquote("PPFD" ~ umol/s/m^2), y = "Leaf Temperature (?C)",
        color = "Sensor Group") +
   scale_color_discrete() +
   geom_point(na.rm = TRUE, size = 3, stroke = 1.5) +

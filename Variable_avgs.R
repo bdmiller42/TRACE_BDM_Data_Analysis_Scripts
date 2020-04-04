@@ -1,7 +1,7 @@
 # Program Title: ANOVA Analysis for daily averages.
 # Author: Benjamin D. Miller
-# Date Started: Nov/21/2018
-# Date Revised: May/30/2019
+# Date Started: 20181121
+# Date Revised: 20190530
 # Program Description: Creates barplots with standard error of the groups
 # and perfoms anova analysis on each variable. Also does TukeyHSD analysis
 # and adds characters to the graph based on the results. The tukey results
