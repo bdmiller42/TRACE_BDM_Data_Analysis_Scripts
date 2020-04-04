@@ -1,7 +1,7 @@
 # Program Title: ANCOVA Analysis of leaf and air temperature
 # Author: Benjamin D. Miller
-# Date Started: Nov/21/2018
-# Date Revised: May/30/2019
+# Date Started: 20181121
+# Date Revised: 20190530
 # Program Description:
 
 #imports libraries

@@ -1,8 +1,8 @@
 #----
 # Title: Graph outputs of SURF data
 # Author: Ben Miller
-# Date Started: Nov/2/2018
-# Date updated: may/18/2019
+# Date Started: 20181105
+# Date updated: 20190518
 # Description: Creates graphs of level by level analyses
 #----
 
@@ -92,7 +92,7 @@ leaf_temp <- ggplot(data = leaf_temp_avg, aes(x = time, y = leaf_temp_c,
               fill = rgb(red = 192, blue = 192, green =  192,
                          maxColorValue = 255)) +
   geom_line(aes(color = sens_hgt), na.rm = T, size = 1.5) +
-  labs(x = "", y = "Leaf Temp (°C)",
+  labs(x = "", y = "Leaf Temp (?C)",
        color = "Sensor \nHeight (m)") +
   scale_x_continuous(breaks = c(0, 4, 8, 12, 16, 20),
                    labels = c("0:00", "4:00", "8:00", "12:00",
@@ -113,7 +113,7 @@ air_temp <- ggplot(data = air_temp_avg, aes(x = time, y = air_temp_c,
               fill = rgb(red = 192, blue = 192, green =  192,
                          maxColorValue = 255)) +
   geom_line(aes(color = sens_hgt), na.rm = T, size = 1.5) +
-  labs(x = "", y = "Air Temp (°C)", color = "Sensor \nHeight (m)") +
+  labs(x = "", y = "Air Temp (?C)", color = "Sensor \nHeight (m)") +
   scale_x_continuous(breaks = c(0, 4, 8, 12, 16, 20),
                    labels = c("0:00", "4:00", "8:00", "12:00",
                               "16:00", "20:00")) +
