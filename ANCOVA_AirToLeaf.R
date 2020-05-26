@@ -13,8 +13,10 @@ library(ggpubr)
 library(lsmeans)
 library(lubridate)
 
+#Turns off current graphics
+graphics.off()
+
 # Sets working directory and defines varibles from files
-setwd("B:/Research/SURF/Data/CSV-Conversion_10.6.18/CSV_Files/master")
 data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
 data_master$halfhour <- as.POSIXct(data_master$halfhour)
 # Selects daytime values and applies group desitnction to new dataframe
@@ -59,7 +61,12 @@ temp_temp <- ggplot(data = (temp_df),
               color = 'red')
 
 # Prints temp graph and associated models.
+tiff(filename = "Figure_4_Tair_Tleaf_Behavior.tiff",
+     width = 1080, height = 720, units = "px",
+     compression = "none")
 temp_temp
+
+dev.off()
 
 summary(mod_temp)
 
@@ -67,3 +74,5 @@ summary(mod_temp)
 temp.lst <- lstrends(mod_temp, ~group, var = "air_temp_c")
 
 pairs(temp.lst)
+
+#End of script

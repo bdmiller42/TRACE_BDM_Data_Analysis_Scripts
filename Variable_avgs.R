@@ -16,8 +16,10 @@ library(Rmisc)
 library(ggplot2)
 library(ggpubr)
 
+#Turns off current graphics
+graphics.off()
+
 # Sets working directory and defines varibles from files
-setwd("/Users/Ben/Documents/MTU/Research/SURF/Data/CSV-Conversion_10.6.18/CSV_Files/master")
 data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
 data_master$halfhour <- as.POSIXct(data_master$halfhour)
 
@@ -312,6 +314,9 @@ vpd_max_plot <- ggplot(df.list$vpd_day_max, aes(x = reorder(group, -sort),
   scale_fill_manual(values = c("#808080","#404040", "#C0C0C0"))
 
 # Displays bar charts in a grid
+tiff(filename = "Figure_3_averages_and_maxima.tiff",
+     width = 1080, height = 720, units = "px",
+     compression = "none")
 ggarrange(leaf_day_plot, leaf_max_plot,
           air_day_plot, air_max_plot,
           vpd_day_plot, vpd_max_plot,
@@ -325,7 +330,7 @@ ggarrange(leaf_day_plot, leaf_max_plot,
                             family = NULL),
           hjust = -.5, vjust = 1,
           widths = c(1,1), heights = c(1,1))
-
+dev.off()
 # Printed summary of anova results.
 summary.aov(leafmean.aov)
 leafmean.HSD
