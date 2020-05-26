@@ -18,8 +18,10 @@ library(HH)
 library(ggplot2)
 library(ggpubr)
 
+#Turns off current graphics
+graphics.off()
+
 # Sets working directory and defines varibles from files
-setwd("B:/Research/SURF/Data/CSV-Conversion_10.6.18/CSV_Files/master")
 data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
 data_master$halfhour <- as.POSIXct(data_master$halfhour)
 # Selects daytime values and applies group desitnction to new dataframe
@@ -93,10 +95,16 @@ ppfd_leaf <- ggplot(data = (ppfd_df),
               color = "black", size = 2)
 
 # Arranges graphs into a two by two grid
+tiff(filename = "Figure_5_PPFD_Temp_Regression.tiff",
+     width = 1080, height = 720, units = "px",
+     compression = "none")
 ggarrange(ppfd_leaf, ppfd_delta, labels = c("(a)", "(b)"),
           legend = "bottom", common.legend = TRUE,
           font.label = list(size = 28, face = "bold", color = "black",
                             family = NULL),
           hjust = -2.5, vjust = 1,
           widths = c(1,1), heights = c(1,1))
+dev.off()
+
+#End of Script
  

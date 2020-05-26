@@ -13,8 +13,10 @@ library(Hmisc)
 library(Rmisc)
 library(ggpubr)
 
+#Turns off current graphics
+graphics.off()
+
 # Sets working directory and defines varibles from files
-setwd("B:/Research/SURF/Data/CSV-Conversion_10.6.18/CSV_Files/master")
 data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
 data_master$halfhour <- as.POSIXlt(data_master$halfhour)
 data_master$sens_hgt <- as.factor(data_master$sens_hgt)
@@ -159,9 +161,15 @@ vpd <- ggplot(data = vpd_avg, aes(x = time, y = vpd,
                    labels = c("0:00", "4:00", "8:00", "12:00", "16:00", "20:00"))
 
 # Creates grid of all graphs
+tiff(filename = "Figure_2_Diunal_Pattern.tiff",
+     width = 1080, height = 720, units = "px",
+     compression = "none")
 ggarrange(leaf_temp, air_temp, vpd, ppfd,
           labels = c("(a)", "(b)", "(c)", "(d)"),
           legend = "right", common.legend = TRUE,
           font.label = list(size = 20, face = "bold", color = "black", family = NULL),
           hjust = -3.25, vjust = 1.5,
           widths = c(1,1), heights = c(1,1))
+dev.off()
+
+#End of script
