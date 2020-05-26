@@ -164,7 +164,7 @@ leaf_day_plot <- ggplot(df.list$leaf_day_avg, aes(x = reorder(group, -sort),
                  pch = c(65, 65, 66),
                  stroke = 8)) +
   coord_flip(ylim = c(25,29)) +
-  labs(y = "Daily Mean Leaf Temp (∆C)", x = "") +
+  labs(y = "Daily Mean Leaf Temp (°C)", x = "") +
   theme_classic() +
   theme(text = element_text(size = 20))+
   scale_fill_manual(values = c("#808080","#404040", "#C0C0C0"))
@@ -183,7 +183,7 @@ air_day_plot <- ggplot(df.list$air_day_avg, aes(x = reorder(group, -sort),
                  pch = c(65, 65, 66),
                  stroke = 8)) +
   coord_flip(ylim = c(25,29)) +
-  labs(y = " Daily Mean Air Temp (∆C)", x = "") +
+  labs(y = " Daily Mean Air Temp (°C)", x = "") +
   theme_classic() +
   theme(text = element_text(size = 20))+
   scale_fill_manual(values = c("#808080","#404040", "#C0C0C0"))
@@ -243,7 +243,7 @@ leaf_max_plot <- ggplot(df.list$leaf_day_max, aes(x = reorder(group, -sort),
                  stroke = 8)) +
   geom_hline(yintercept = 30, linetype = 2, size = 2) +
   coord_flip(ylim = c(25,33)) +
-  labs(y = "Daily Max Leaf Temp (∆C)", x = "") +
+  labs(y = "Daily Max Leaf Temp (°C)", x = "") +
   theme_classic() +
   theme(text = element_text(size = 20),axis.text.y = element_text(color = "white",
                                                                   size = 10)) +
@@ -264,7 +264,7 @@ air_max_plot <- ggplot(df.list$air_day_max, aes(x = reorder(group, -sort),
                  stroke = 8)) +
   geom_hline(yintercept = 30, linetype = 2, size = 2) +
   coord_flip(ylim = c(25,33)) +
-  labs(y = "Daily Max Air Temp (∆C)", x = "") +
+  labs(y = "Daily Max Air Temp (°C)", x = "") +
   theme_classic() +
   theme(text = element_text(size = 20),axis.text.y = element_text(color = "white",
                                                                   size = 10)) +
