@@ -54,6 +54,7 @@ temp_temp <- ggplot(data = (temp_df),
   labs(x = "Air Temperature (C)", y = "Leaf Temperature (C)",
        pch = "Sensor Group") +
   scale_shape_manual(values = c(3, 2, 1)) +
+  xlim(24,30) + ylim(24,30) +
   geom_smooth(method = "lm", formula = y ~ x, show.legend = FALSE,
               color = "black", size = 1.5) +
   geom_point(na.rm = TRUE, size = 3, stroke = 2)+
