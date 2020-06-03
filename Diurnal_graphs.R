@@ -10,6 +10,7 @@
 
 library(tidyverse)
 library(ggpubr)
+library(lubridate)
 
 #Turns off current graphics
 graphics.off()
@@ -120,13 +121,15 @@ ggarrange(Diurnal_Plots$delta_temp,
                     ncol = 2, legend = "none",
                     hjust = -4.25, vjust = 12,
                     labels = c("(b)", "(c)")),
-          ggarrange(Diurnal_Plots$vpd, Diurnal_Plots$ppfd_mes,
+          ggarrange(Diurnal_Plots$ppfd_mes, Diurnal_Plots$vpd, 
                     ncol = 2, legend = "none",
                     hjust = -5.25, vjust =  4,
                     labels = c("(d)", "(e)")))
 dev.off()
 
 
-print("Finished")
+print("Finished making graph")
+
+
 
 # End of script
