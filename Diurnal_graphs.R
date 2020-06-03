@@ -8,18 +8,20 @@
 #              Topt can be applied to the graphs at the end of the user defined variables.
 #----
 
+#Turns off current graphics and clears working environment
+rm(list = ls())
+
+# Sets libraries
 library(tidyverse)
 library(ggpubr)
 library(lubridate)
 
-#Turns off current graphics
-graphics.off()
 
 # Sets working directory and defines varibles from files
 data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
 
-# Sets Z-value used for CI calculation
-Z <- 1.960 #95 percent
+# Sets stat-value (in this isntance a Z value) used for CI calculation
+test_stat <- 1.960 #95 percent
 
 # Sets average Topt Value with confidence intervals for graphic display and time above estimation
 T_opt <- c(29,30,31) #estimates for now, will change with updated values from Kelsey
@@ -44,7 +46,7 @@ data_master$hour <- as.numeric(hour(data_master$halfhour))
 data_master$minutes <- as.numeric(minute(data_master$halfhour))
 data_master$time <- data_master$hour + ifelse(data_master$minutes == 30, .5, 0)
 data_master <- data_master %>%
-  select(-c(halfhour,X, hour, minutes))
+  dplyr::select(-c(halfhour,X, hour, minutes))
 
 # Delta T Calculation
 data_master$delta_temp <- data_master$leaf_temp_c - data_master$air_temp_c
@@ -57,12 +59,13 @@ diurnal_plot_function <- function(input_df, var_vector, lab_vector, z_value) {
   # of central tendancy and makes a plot of its diurnal pattern.
   for (i in 1:length(var_vector)) {
     print(paste0("Making ",var_vector[i], " diurnal graph"))
-    input_df$var <- input_df[, var_vector[i]]
-    includedvars <- c("var", "sens_hgt", "time")
+    input_df$x <- input_df[, var_vector[i]]
     out_df <- input_df %>%
       dplyr::group_by(sens_hgt, time) %>%
-      dplyr::summarise(mean = mean(var, na.rm = TRUE), sd = sd(var),
-                       n = n(), ci = z_value*(sd/n))
+      dplyr::summarise(mean = mean(x, na.rm = TRUE), 
+                       sd = sd(x, na.rm = TRUE),
+                       n = n(),
+                       ci = test_stat*(sd/sqrt(n)))
     
     #Diurnal Plots are created one by one as the loop repeats
     plots[[var_vector[i]]] <- ggplot(data = out_df,
@@ -106,9 +109,9 @@ diurnal_plot_function(data_master, plot_variables, plot_labels, Z)
 print("Saving output of all diurnal graphs to file")
 
 # Turns on a graphics device and saves the graphs all in a grid to a .tiff file. Filename must have .tiff at the end
-tiff(filename = "Figure_2_Diunal_Pattern.tiff",
-     width = 720, height = 1080, units = "px",
-     compression = "none")
+# tiff(filename = "Figure_2_Diunal_Pattern.tiff",
+#      width = 720, height = 1080, units = "px",
+#      compression = "none")
 
 # Places all the plots into a grid, mess with the outputs to get different bits where
 # they look nice. Would be difficult to automate that process as computers have no taste.
@@ -125,8 +128,11 @@ ggarrange(Diurnal_Plots$delta_temp,
                     ncol = 2, legend = "none",
                     hjust = -5.25, vjust =  4,
                     labels = c("(d)", "(e)")))
-dev.off()
 
+ggsave(filename = "Figure_2_Diunal_Pattern.tiff",
+       width = 19, height = 29, units = "cm", device = "tiff")
+
+dev.off()
 
 print("Finished making graph")
 

@@ -12,121 +12,182 @@ library(openair)
 library(tidyverse)
 library(HH)
 library(lubridate)
-library(Rmisc)
-library(ggplot2)
 library(ggpubr)
 
+#Input file
+data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
+
+# Sets Z-value used for CI calculation
+test_val <- 1.960 #95 percent
+
+# Plot list name
+plot_name <- "Daily_Mean_Max"
+#Plot Labels
+plot_labels <- c(expression(Delta*"T"*" (°C)"), expression("T"["leaf"]*" (°C)"),
+                 expression(T["air"]*" (°C)"),
+                 bquote("PPFD" ~ umol/s/m^2), "Vapor Pressure Deficit (kPa)")
+
+# Sets variables to be averaged and maximized by day
+# ***VARIBLES MUST MATCH THE ORDER WITH THE ABOVE VECTOR****
+plot_variables <- c("delta_temp", "leaf_temp_c", "air_temp_c", "ppfd_mes", "vpd")
+
+#######---------------------------- END USER DEFINED VARIABLES --------------------------######
 #Turns off current graphics
 graphics.off()
 
-# Sets working directory and defines varibles from files
-data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
-data_master$halfhour <- as.POSIXct(data_master$halfhour)
-
-# Selects daytime values, establishes a "date" class, calculates T 
-# and avereages values over the course of the day
-
-data_master <- with(data_master,
-                    data_master[hour(halfhour) >= 7 & hour(halfhour) <= 17,])
-data_master$delta_t <- data_master$leaf_temp_c - data_master$air_temp_c
+#### Data Wrangling ####
+# Defines the variables in proper form, Also creates a date class for
+# use during average and maxima calculations.
 
 data_master$sens_hgt <- as.factor(data_master$sens_hgt)
 
-data_master$date <- floor_date(data_master$halfhour, "1 day")
+data_master$date <- floor_date(as.POSIXct(data_master$halfhour), "1 day")
 
-# Creates a daily Maximum dataframe based on sensor height
-daily_max <- aggregate(cbind(leaf_temp_c, air_temp_c,
-                             vpd, ppfd_mes) ~ date + sens_hgt,
-                       data = data_master,
-                       FUN = max,
-                       na.action = NULL)
+# Calculates Delta T
+data_master$delta_t <- data_master$leaf_temp_c - data_master$air_temp_c
 
-daily_max$group <- as.factor(ifelse(daily_max$sens_hgt == 20, "Upper",
-                                    ifelse(daily_max$sens_hgt == 2,
-                                           "Understory",
-                                           "Middle")))
+# Selects only daytime Values
+data_master <- with(data_master,
+                    data_master[hour(halfhour) >= 7 & hour(halfhour) <= 17,])
 
-# Sets a group based on sensor height
-data_master$group <- as.factor(ifelse(data_master$sens_hgt == 20, "Upper",
-                                     ifelse(data_master$sens_hgt == 2,
-                                            "Understory",
-                                            "Middle")))
+# Assigns sensor heights to associated groups (1= Upper, 2 = Middle, 3= Understory)
+data_master$group <- as.factor(ifelse(data_master$sens_hgt == 20, 1,
+                                      ifelse(data_master$sens_hgt == 2,
+                                             3,
+                                             2)))
 
-daily_mean <- aggregate(cbind(leaf_temp_c, air_temp_c,
-                              vpd, ppfd_mes) ~ date + group,
-                        data = data_master,
-                        FUN = mean,
-                        na.rm = TRUE,
-                        na.action = NULL)
-
-# Calculates daily means for each variable for graphing purposes
-leaf_day_avg <- summarySE(data = daily_mean,
-                           measurevar = "leaf_temp_c",
-                           groupvars = c("group"),
-                           na.rm = TRUE,
-                           conf.interval = .95)
-
-air_day_avg <- summarySE(data = daily_mean,
-                          measurevar = "air_temp_c",
-                          groupvars = c("group"),
-                          na.rm = TRUE,
-                          conf.interval = .95)
-
-ppfd_day_avg <- summarySE(data = daily_mean,
-                      measurevar = "ppfd_mes",
-                      groupvars = c("group"),
-                      na.rm = TRUE,
-                      conf.interval = .95)
-
-vpd_day_avg <- summarySE(data = daily_mean,
-                     measurevar = "vpd",
-                     groupvars = c("group"),
-                     na.rm = TRUE,
-                     conf.interval = .95)
-
-# Calculates means of daily maximum values
-# for each variable for graphing purposes
-leaf_day_max <- summarySE(data = daily_max,
-                          measurevar = "leaf_temp_c",
-                          groupvars = c("group"),
-                          na.rm = TRUE,
-                          conf.interval = .95)
-
-air_day_max <- summarySE(data = daily_max,
-                         measurevar = "air_temp_c",
-                         groupvars = c("group"),
-                         na.rm = TRUE,
-                         conf.interval = .95)
-
-ppfd_day_max <- summarySE(data = daily_max,
-                          measurevar = "ppfd_mes",
-                          groupvars = c("group"),
-                          na.rm = TRUE,
-                          conf.interval = .95)
-
-vpd_day_max <- summarySE(data = daily_max,
-                         measurevar = "vpd",
-                         groupvars = c("group"),
-                         na.rm = TRUE,
-                         conf.interval = .95)
-
-# Stores all data into a list and applies a factor to each group for
-# display purposes
-df.list <- list(leaf_day_avg, air_day_avg, ppfd_day_avg, vpd_day_avg,
-                leaf_day_max, air_day_max, ppfd_day_max, vpd_day_max)
-
-names(df.list) <- c("leaf_day_avg", "air_day_avg", "ppfd_day_avg","vpd_day_avg",
-                    "leaf_day_max", "air_day_max", "ppfd_day_max","vpd_day_max")
-
-sortfun <- function(x) {
-  x[,"sort"] <- ifelse(x[,"group"] == "Understory",3,
-            ifelse(x[,"group"] == "Middle", 2, 1))
-  return(x)
+diurnal_plot_function <- function(input_df, var_vector, lab_vector, z_value, plot_name) {
+  #initializes empty plot list
+  plots <- c()
+  # loops through the variable vector, and for each variable in the vector does a mean
+  # a mean and makes a bar plot of its result
+  for (i in 1:length(var_vector)) {
+    print(paste0("Making ",var_vector[i], " average", " graph"))
+    input_df$var <- input_df[, var_vector[i]]
+    out_df <- input_df %>%
+      dplyr::group_by(sort, date) %>%
+      dplyr::summarise(mean = mean(var, na.rm = TRUE), sd = sd(var),
+                       n = n(), ci = test_stat*(sd/n))
+    
+    #Diurnal Plots are created one by one as the loop repeats
+    plots[[var_vector[i]]] <- ggplot(out_df, aes(x = reorder(-group),
+                                                               y = mean,
+                                                               fill = group)) +
+      geom_bar(color = "black", stat = "identity") +
+      geom_errorbar(data = out_df$mean,
+                    aes(ymin = mean - ci, ymax = mean + ci),
+                    width = .5,
+                    size = .25) +
+      scale_shape_identity() +
+      geom_point(aes(x = c("Understory", "Middle", "Upper"),
+                     y = c(26.75, 27.1, 28.75),
+                     pch = c(65, 65, 66),
+                     stroke = 8)) +
+      coord_flip(ylim = c(25,29)) +
+      labs(y = , x = "") +
+      theme_classic() +
+      theme(text = element_text(size = 20))+
+      scale_fill_manual(values = c("#808080","#404040", "#C0C0C0"))
+    # Finds the air temp graphs based on theier identifying string and
+    # adds the Topt information to the plots. Also matches the scales
+    # of the two plots for ease of comparison.
+    if (grepl("temp_c", var_vector[i])){
+      plots[[var_vector[i]]] <- plots[[var_vector[i]]] +
+        scale_y_continuous(breaks = c(24, 26, 28, 30)) +
+        geom_hline(yintercept = median(T_opt),
+                   linetype = 1, size = 1) + 
+        geom_hline(yintercept = min(T_opt),
+                   linetype = 6, size = 1) + 
+        geom_hline(yintercept = max(T_opt),
+                   linetype = 6, size = 1)
+    }
+  }
+  assign(x = plot_name, plots, envir = .GlobalEnv)
 }
 
-df.list <- sapply(df.list[1:8], "sortfun",
-           simplify = FALSE,
-           USE.NAMES = TRUE)
+# # Creates a daily Maximum dataframe based on sensor height
+# daily_max <- aggregate(cbind(leaf_temp_c, air_temp_c,
+#                              vpd, ppfd_mes) ~ date + sens_hgt,
+#                        data = data_master,
+#                        FUN = max,
+#                        na.action = NULL)
+# 
+# daily_max$group <- as.factor(ifelse(daily_max$sens_hgt == 20, "Upper",
+#                                     ifelse(daily_max$sens_hgt == 2,
+#                                            "Understory",
+#                                            "Middle")))
+# 
+# # Sets a group based on sensor height
+# data_master$group <- as.factor(ifelse(data_master$sens_hgt == 20, "Upper",
+#                                      ifelse(data_master$sens_hgt == 2,
+#                                             "Understory",
+#                                             "Middle")))
+# 
+# daily_mean <- aggregate(cbind(leaf_temp_c, air_temp_c,
+#                               vpd, ppfd_mes) ~ date + group,
+#                         data = data_master,
+#                         FUN = mean,
+#                         na.rm = TRUE,
+#                         na.action = NULL)
+# 
+# # Calculates daily means for each variable for graphing purposes
+# leaf_day_avg <- summarySE(data = daily_mean,
+#                            measurevar = "leaf_temp_c",
+#                            groupvars = c("group"),
+#                            na.rm = TRUE,
+#                            conf.interval = .95)
+# 
+# air_day_avg <- summarySE(data = daily_mean,
+#                           measurevar = "air_temp_c",
+#                           groupvars = c("group"),
+#                           na.rm = TRUE,
+#                           conf.interval = .95)
+# 
+# ppfd_day_avg <- summarySE(data = daily_mean,
+#                       measurevar = "ppfd_mes",
+#                       groupvars = c("group"),
+#                       na.rm = TRUE,
+#                       conf.interval = .95)
+# 
+# vpd_day_avg <- summarySE(data = daily_mean,
+#                      measurevar = "vpd",
+#                      groupvars = c("group"),
+#                      na.rm = TRUE,
+#                      conf.interval = .95)
+# 
+# # Calculates means of daily maximum values
+# # for each variable for graphing purposes
+# leaf_day_max <- summarySE(data = daily_max,
+#                           measurevar = "leaf_temp_c",
+#                           groupvars = c("group"),
+#                           na.rm = TRUE,
+#                           conf.interval = .95)
+# 
+# air_day_max <- summarySE(data = daily_max,
+#                          measurevar = "air_temp_c",
+#                          groupvars = c("group"),
+#                          na.rm = TRUE,
+#                          conf.interval = .95)
+# 
+# ppfd_day_max <- summarySE(data = daily_max,
+#                           measurevar = "ppfd_mes",
+#                           groupvars = c("group"),
+#                           na.rm = TRUE,
+#                           conf.interval = .95)
+# 
+# vpd_day_max <- summarySE(data = daily_max,
+#                          measurevar = "vpd",
+#                          groupvars = c("group"),
+#                          na.rm = TRUE,
+#                          conf.interval = .95)
+# 
+# # Stores all data into a list and applies a factor to each group for
+# # display purposes
+# df.list <- list(leaf_day_avg, air_day_avg, ppfd_day_avg, vpd_day_avg,
+#                 leaf_day_max, air_day_max, ppfd_day_max, vpd_day_max)
+# 
+# names(df.list) <- c("leaf_day_avg", "air_day_avg", "ppfd_day_avg","vpd_day_avg",
+#                     "leaf_day_max", "air_day_max", "ppfd_day_max","vpd_day_max")
 
 # Anova analysis of variable groups
 leafmean.aov <- aov(formula = leaf_temp_c ~ group, data = daily_mean)
