@@ -93,11 +93,11 @@ diurnal_plot_function <- function(input_df, var_vector, lab_vector, z_value) {
       plots[[var_vector[i]]] <- plots[[var_vector[i]]] +
         scale_y_continuous(breaks = c(24, 26, 28, 30)) +
         geom_hline(yintercept = median(T_opt),
-                   linetype = 1, size = 1) + 
+                   linetype = 1, size = 1) + # Mean Line
         geom_hline(yintercept = min(T_opt),
-                   linetype = 6, size = 1) + 
+                   linetype = 6, size = 1) + # Lower CI Line
         geom_hline(yintercept = max(T_opt),
-                   linetype = 6, size = 1)
+                   linetype = 6, size = 1) # Upper CI Line
     }
   }
   assign(x = "Diurnal_Plots", plots, envir = .GlobalEnv)
@@ -108,34 +108,30 @@ diurnal_plot_function(data_master, plot_variables, plot_labels, Z)
 # Creates grid of all graphs
 print("Saving output of all diurnal graphs to file")
 
-# Turns on a graphics device and saves the graphs all in a grid to a .tiff file. Filename must have .tiff at the end
-# tiff(filename = "Figure_2_Diunal_Pattern.tiff",
-#      width = 720, height = 1080, units = "px",
-#      compression = "none")
+# Turns on a graphics device and saves the graphs all in a grid to a .tiff file.
+# Filename must have .tiff at the end
+tiff(filename = "Figure_2_Diunal_Pattern.tiff",
+     width = 720, height = 1080, units = "px")
 
 # Places all the plots into a grid, mess with the outputs to get different bits where
 # they look nice. Would be difficult to automate that process as computers have no taste.
-ggarrange(Diurnal_Plots$delta_temp,
-          nrow = 3, legend = "right",
-          hjust = -4.25, vjust = 3,
-          labels = "(a)",
-          ggarrange(Diurnal_Plots$leaf_temp_c,
-                    Diurnal_Plots$air_temp_c,
-                    ncol = 2, legend = "none",
-                    hjust = -4.25, vjust = 12,
-                    labels = c("(b)", "(c)")),
-          ggarrange(Diurnal_Plots$ppfd_mes, Diurnal_Plots$vpd, 
-                    ncol = 2, legend = "none",
-                    hjust = -5.25, vjust =  4,
-                    labels = c("(d)", "(e)")))
-
-ggsave(filename = "Figure_2_Diunal_Pattern.tiff",
-       width = 19, height = 29, units = "cm", device = "tiff")
+fin_plot <- ggarrange(Diurnal_Plots$delta_temp,
+                      nrow = 3, legend = "right",
+                      hjust = -4.25, vjust = 3,
+                      labels = "(a)",
+                      ggarrange(Diurnal_Plots$leaf_temp_c,
+                                Diurnal_Plots$air_temp_c,
+                                ncol = 2, legend = "none",
+                                hjust = -4.25, vjust = 12,
+                                labels = c("(b)", "(c)")),
+                      ggarrange(Diurnal_Plots$ppfd_mes, Diurnal_Plots$vpd, 
+                                ncol = 2, legend = "none",
+                                hjust = -5.25, vjust =  4,
+                                labels = c("(d)", "(e)")))
+print(fin_plot)
 
 dev.off()
 
 print("Finished making graph")
-
-
 
 # End of script
