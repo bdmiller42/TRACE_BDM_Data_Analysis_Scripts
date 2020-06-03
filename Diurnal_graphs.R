@@ -126,8 +126,7 @@ ggarrange(Diurnal_Plots$delta_temp,
                     labels = c("(d)", "(e)")))
 dev.off()
 
-<<<<<<< HEAD
+
 print("Finished")
-=======
->>>>>>> 3080e7c410b4442194217a65515cecea209e03ad
+
 # End of script
