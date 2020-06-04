@@ -24,8 +24,8 @@ test_val <- 1.960 #95 percent
 plot_name <- "Daily_Mean_Max"
 #Plot Labels
 plot_labels <- c(expression(Delta*"T"*" (°C)"), expression("T"["leaf"]*" (°C)"),
-                 expression(T["air"]*" (°C)"),
-                 bquote("PPFD" ~ umol/s/m^2), "Vapor Pressure Deficit (kPa)")
+                 expression("T"["air"]*" (°C)"),
+                expression("PPFD "["umol/s/m"^"2"]), expression("Vapor Pressure Deficit (kPa)"))
 
 # Sets variables to be averaged and maximized by day
 # ***VARIBLES MUST MATCH THE ORDER WITH THE ABOVE VECTOR****
@@ -44,67 +44,100 @@ data_master$sens_hgt <- as.factor(data_master$sens_hgt)
 data_master$date <- floor_date(as.POSIXct(data_master$halfhour), "1 day")
 
 # Calculates Delta T
-data_master$delta_t <- data_master$leaf_temp_c - data_master$air_temp_c
+data_master$delta_temp <- data_master$leaf_temp_c - data_master$air_temp_c
 
 # Selects only daytime Values
 data_master <- with(data_master,
                     data_master[hour(halfhour) >= 7 & hour(halfhour) <= 17,])
 
 # Assigns sensor heights to associated groups (1= Upper, 2 = Middle, 3= Understory)
-data_master$group <- as.factor(ifelse(data_master$sens_hgt == 20, 1,
-                                      ifelse(data_master$sens_hgt == 2,
-                                             3,
-                                             2)))
+data_master$group <-ifelse(data_master$sens_hgt == 20, 1,
+                           ifelse(data_master$sens_hgt == 2,
+                                  3,
+                                  2))
 
-diurnal_plot_function <- function(input_df, var_vector, lab_vector, z_value, plot_name) {
-  #initializes empty plot list
+daily_plot_function <- function(input_df, var_vector, lab_vector, test_stat) {
+  #initializes empty lists for plots, Tucky and ancova results
   plots <- c()
-  # loops through the variable vector, and for each variable in the vector does a mean
-  # a mean and makes a bar plot of its result
-  for (i in 1:length(var_vector)) {
-    print(paste0("Making ",var_vector[i], " average", " graph"))
-    input_df$var <- input_df[, var_vector[i]]
-    out_df <- input_df %>%
-      dplyr::group_by(sort, date) %>%
-      dplyr::summarise(mean = mean(var, na.rm = TRUE), sd = sd(var),
-                       n = n(), ci = test_stat*(sd/n))
+  hsd <- c()
+  anova_results <- c()
+  
+  # Vector for "average" and Maximum
+  form <- c("Average", "Maximum")
+  
+  # Makes the nested loop do it twice, once for each 
+  for(j in 1:length(form)) {
     
-    #Diurnal Plots are created one by one as the loop repeats
-    plots[[var_vector[i]]] <- ggplot(out_df, aes(x = reorder(-group),
-                                                               y = mean,
-                                                               fill = group)) +
-      geom_bar(color = "black", stat = "identity") +
-      geom_errorbar(data = out_df$mean,
-                    aes(ymin = mean - ci, ymax = mean + ci),
-                    width = .5,
-                    size = .25) +
-      scale_shape_identity() +
-      geom_point(aes(x = c("Understory", "Middle", "Upper"),
-                     y = c(26.75, 27.1, 28.75),
-                     pch = c(65, 65, 66),
-                     stroke = 8)) +
-      coord_flip(ylim = c(25,29)) +
-      labs(y = , x = "") +
-      theme_classic() +
-      theme(text = element_text(size = 20))+
-      scale_fill_manual(values = c("#808080","#404040", "#C0C0C0"))
-    # Finds the air temp graphs based on theier identifying string and
-    # adds the Topt information to the plots. Also matches the scales
-    # of the two plots for ease of comparison.
-    if (grepl("temp_c", var_vector[i])){
-      plots[[var_vector[i]]] <- plots[[var_vector[i]]] +
-        scale_y_continuous(breaks = c(24, 26, 28, 30)) +
-        geom_hline(yintercept = median(T_opt),
-                   linetype = 1, size = 1) + 
-        geom_hline(yintercept = min(T_opt),
-                   linetype = 6, size = 1) + 
-        geom_hline(yintercept = max(T_opt),
-                   linetype = 6, size = 1)
-    }
+    # loops through the variable vector, and for each variable in the vector does a mean
+    # a mean and makes a bar plot of its result
+    for (i in 1:length(var_vector)) {
+      print(paste0("Making ",var_vector[i], " ", form[j], " graph"))
+      input_df$x <- input_df[, var_vector[i]]
+      if (form[j] == 1){
+        out_df <- input_df %>%
+          dplyr::group_by(group) %>%
+          dplyr::summarise(plot_value = mean(x, na.rm = TRUE),
+                           sd = sd(x, na.rm = TRUE),
+                           n = n(), ci = test_stat*(sd/n))
+      } else {
+        out_df <- input_df %>%
+          dplyr::group_by(group) %>%
+          dplyr::summarise(plot_value = max(x, na.rm = TRUE),
+                           sd = sd(x, na.rm = TRUE),
+                           n = n(), ci = test_stat*(sd/n))
+      }
+      
+      
+      #Diurnal Plots are created one by one as the loop repeats
+      plots[[paste0(var_vector[i], "_", form[j])]] <- 
+        ggplot(out_df,
+               aes(x = group, 
+                   y = plot_value,
+                   fill = as.factor(group))) +
+        geom_bar(color = "black", stat = "identity", show.legend = FALSE) +
+        geom_errorbar(aes(ymin = plot_value - sd,
+                          ymax = plot_value + sd),
+                      width = .5, size = .25) +
+        scale_shape_identity() +
+        scale_x_reverse(breaks = c(1,2,3),
+        labels = c("Upper", "Middle", "Understory")) +
+        labs(y = lab_vector[i], x = "") +
+        theme_classic() +
+        theme(text = element_text(size = 20))+
+        scale_fill_manual(values = c("#808080","#404040", "#C0C0C0")) +
+        if (grepl("temp_c", var_vector[i])) {
+          coord_flip(ylim = c(25,33))
+        } else {
+          coord_flip()
+        }
+      }
+    assign(x = "Daily_Plots", plots, envir = .GlobalEnv)
   }
-  assign(x = plot_name, plots, envir = .GlobalEnv)
 }
 
+daily_plot_function(data_master, plot_variables, plot_labels, test_val) 
+
+for (i in 1:length(Daily_Plots)){
+ print(Daily_Plots[i]) 
+}
+
+day_plot <- ggarrange(Daily_Plots$delta_temp_Average, Daily_Plots$delta_temp_Maximum,
+                      Daily_Plots$leaf_temp_c_Average, Daily_Plots$leaf_temp_c_Maximum,
+                      Daily_Plots$air_temp_c_Average, Daily_Plots$air_temp_c_Maximum,
+                      Daily_Plots$ppfd_mes_Average, Daily_Plots$ppfd_mes_Maximum,
+                      Daily_Plots$vpd_Average, Daily_Plots$vpd_Maximum,
+                      ncol = 2,
+                      nrow = 5,
+                      labels = c("(a)", "(b)", "(c)", "(d)",
+                                 "(e)", "(f)", "(g)", "(h)", "(i)", "(j)"),
+                      legend = "none",
+                      font.label = list(size = 20, face = "bold", color = "black",
+                                        family = NULL),
+                      hjust = -.5, vjust = 1,
+                      widths = c(1,1), heights = c(1,1))
+annotate_figure(day_plot,
+                left = "Average Values",
+                right = "Daily Maximums")
 # # Creates a daily Maximum dataframe based on sensor height
 # daily_max <- aggregate(cbind(leaf_temp_c, air_temp_c,
 #                              vpd, ppfd_mes) ~ date + sens_hgt,
