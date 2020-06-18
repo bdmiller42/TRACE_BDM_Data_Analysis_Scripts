@@ -2,10 +2,11 @@
 # Title: Diurnal Graph output from 2017 SURF Data
 # Author: Ben Miller
 # Date Started: 20181105
-# Date updated: 20200602
+# Date updated: 20200617
 # Description: Creates Diurnal pattern graphs of various variables that are then arranged in
 #              a grid. The calculations are done within a function that can be seen below. 
 #              Topt can be applied to the graphs at the end of the user defined variables.
+#              It also calculates time above T_opt for each level of the canopy
 #----
 
 #Turns off current graphics and clears working environment
@@ -24,7 +25,7 @@ data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
 test_stat <- 1.960 #95 percent
 
 # Sets average Topt Value with confidence intervals for graphic display and time above estimation
-T_opt <- c(29,30,31) #estimates for now, will change with updated values from Kelsey
+T_opt <- c(29.07,30.32,31.32) #estimates for now, will change with updated values from Kelsey
 
 # A ector of the axis labels desired for output
 
@@ -41,6 +42,7 @@ plot_variables <- c("delta_temp", "leaf_temp_c", "air_temp_c", "ppfd_mes", "vpd"
 # Sets data types, creates easily averaged "time" column for data
 data_master$halfhour <- as.POSIXlt(data_master$halfhour)
 data_master$sens_hgt <- as.factor(data_master$sens_hgt)
+data_master$unique_date <- format(data_master$halfhour, "%Y-%m-%d")
 
 data_master$hour <- as.numeric(hour(data_master$halfhour))
 data_master$minutes <- as.numeric(minute(data_master$halfhour))
@@ -133,5 +135,19 @@ print(fin_plot)
 dev.off()
 
 print("Finished making graph")
+
+### Calculation of average time above T opt
+
+above_t_opt <- data_master %>% 
+  dplyr::group_by(unique_date, sens_hgt) %>%
+  dplyr::filter(leaf_temp_c >= T_opt) %>%
+  dplyr::summarise(time_above = max(time) - min(time)) %>%
+  dplyr::ungroup() %>% 
+  dplyr::group_by(sens_hgt) %>%
+  dplyr::summarise(average_time_above = mean(time_above),
+                   n = n(),
+                   sd = sd(time_above),
+                   up_ci = average_time_above + test_stat * (sd / sqrt(n)),
+                   low_ci = average_time_above - test_stat * (sd / sqrt(n)))
 
 # End of script

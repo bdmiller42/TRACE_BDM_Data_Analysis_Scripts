@@ -70,7 +70,7 @@ daily_plot_function <- function(input_df, var_vector, lab_vector, test_stat) {
   # Vector for "average" and Maximum
   form <- c("Average", "Maximum")
   
-  # Makes the nested loop do it twice, once for each 
+  # Makes the nested loop do it twice, once for each metric
   for(j in 1:length(form)) {
     
     # loops through the variable vector, and for each variable in the vector does a mean
@@ -117,6 +117,8 @@ daily_plot_function <- function(input_df, var_vector, lab_vector, test_stat) {
                          ci = test_stat*(sd/sqrt(n()))) %>%
         dplyr::ungroup()
       
+      #joins the letter results of the tukey to the dataframe based on canopy group
+      
       out_df<- dplyr::left_join(out_df, tukey_results,
                                 by = c('group' = "lhs"))
       
@@ -135,10 +137,12 @@ daily_plot_function <- function(input_df, var_vector, lab_vector, test_stat) {
         geom_errorbar(aes(ymin = plot_value - ci,
                           ymax = plot_value + ci),
                       width = .5, size = .25) +
+        #plots the letters of the tukey results
         geom_text(aes(y = ifelse(plot_value <0,
-                                 plot_value - sd,
-                                 plot_value + sd),
-                       label = letters)) +
+                                 plot_value - sd - ci,
+                                 plot_value + sd + ci),
+                       label = letters),
+                  size = 10) +
         scale_shape_identity() +
         scale_x_reverse(breaks = c(1,2,3),
         labels = c("Upper", "Middle", "Understory")) +
@@ -175,7 +179,7 @@ day_plot <- ggarrange(Daily_Plots$delta_temp_Average, Daily_Plots$delta_temp_Max
                       legend = "none",
                       font.label = list(size = 20, face = "bold", color = "black",
                                         family = NULL),
-                      hjust = 0, vjust = 1,
+                      hjust = -1.5, vjust = 1,
                       align = "hv",
                       widths = c(1,1), heights = c(1,1))
 
