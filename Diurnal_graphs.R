@@ -87,8 +87,9 @@ diurnal_plot_function <- function(input_df, var_vector, lab_vector, z_value) {
            color = "Sensor \nHeight (m)") +
       scale_x_continuous(breaks = c(0, 4, 8, 12, 16, 20),
                          labels = c("0:00", "4:00", "8:00", "12:00",
-                                    "16:00", "20:00"))
-    # Finds the air temp graphs based on theier identifying string and
+                                    "16:00", "20:00")) +
+      scale_color_brewer(palette = "Blues")
+    # Finds the air temp graphs based on thier identifying string and
     # adds the Topt information to the plots. Also matches the scales
     # of the two plots for ease of comparison.
     if (grepl("temp_c", var_vector[i])){
@@ -136,18 +137,30 @@ dev.off()
 
 print("Finished making graph")
 
-### Calculation of average time above T opt
+### Calculation of average time above T opt if the temperature
 
-above_t_opt <- data_master %>% 
-  dplyr::group_by(unique_date, sens_hgt) %>%
-  dplyr::filter(leaf_temp_c >= T_opt) %>%
-  dplyr::summarise(time_above = max(time) - min(time)) %>%
+above_t_opt_if_above <- data_master %>%
+  dplyr::group_by(sens_hgt)%>% 
+  dplyr::filter(leaf_temp_c >= T_opt[2]) %>%
   dplyr::ungroup() %>% 
-  dplyr::group_by(sens_hgt) %>%
+  dplyr::group_by(unique_date, sens_hgt) %>% 
+  dplyr::summarise(time_above = max(time) - min(time), .groups = 'keep') %>%
+  dplyr::filter(time_above > 0) %>%
+  dplyr::ungroup() %>%
   dplyr::summarise(average_time_above = mean(time_above),
                    n = n(),
                    sd = sd(time_above),
                    up_ci = average_time_above + test_stat * (sd / sqrt(n)),
                    low_ci = average_time_above - test_stat * (sd / sqrt(n)))
+
+above_t_opt_overall_average <- data_master %>% 
+  dplyr::group_by(sens_hgt, time) %>%
+  dplyr::summarise(average_temp_day_time = mean(leaf_temp_c, na.rm = TRUE)) %>%  
+  dplyr::filter(average_temp_day_time >= T_opt[2])
+
+total_days <- data_master %>%
+  dplyr::group_by(unique_date) %>% 
+  dplyr::summarise(unique_days = n())
+
 
 # End of script

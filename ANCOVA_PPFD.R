@@ -70,13 +70,15 @@ mod_delta
 ppfd_delta <- ggplot(data = (ppfd_df),
                    aes(x = ppfd_mes, y = delta_t,
                        linetype = group,
-                       color = group)) +
+                       color = group,
+                       shape = group)) +
   theme_classic() +
   theme(text = element_text(size = 28))+
-  labs(x = bquote("PPFD" ~ umol/s/m^2), y = expression(Delta*"T (?C)"),
-       color = "Sensor Group") +
-  scale_color_discrete() +
-  geom_point(na.rm = TRUE, size = 3, stroke = 1.5)+
+  labs(x = bquote("PPFD" ~ umol/s/m^2), y = expression(Delta*"T" (degree*C)),
+       color = "Sensor Group", shape = "Sensor Group") +
+  scale_color_manual(values = c('deepskyblue1','orangered4')) +
+  scale_shape_manual(values = c(16,17)) +
+  geom_point(na.rm = TRUE, size = 3, stroke = 1.5) +
   geom_smooth(method = "lm", formula = y ~ x, show.legend = FALSE,
               color = "black", size = 2) +
   geom_hline(yintercept = 0, linetype = 3, size = 1.5)
@@ -84,13 +86,15 @@ ppfd_delta <- ggplot(data = (ppfd_df),
 ppfd_leaf <- ggplot(data = (ppfd_df),
                      aes(x = ppfd_mes, y = leaf_temp_c,
                          linetype = group,
-                         color = group)) +
+                         color = group,
+                         shape = group)) +
   theme_classic() +
   theme(text = element_text(size = 26))+
-  labs(x = bquote("PPFD" ~ umol/s/m^2), y = "Leaf Temperature (?C)",
-       color = "Sensor Group") +
-  scale_color_discrete() +
-  geom_point(na.rm = TRUE, size = 3, stroke = 1.5) +
+  labs(x = bquote("PPFD" ~ umol/s/m^2), y = expression("Leaf Temperature " (degree*C)),
+       color = "Sensor Group", shape = "Sensor Group") +
+  scale_color_manual(values = c('deepskyblue1','orangered4')) +
+  scale_shape_manual(values = c(16,17)) +
+  geom_point(na.rm = TRUE, size = 3, stroke = 1.5)+
   geom_smooth(method = "lm", formula = y ~ x, show.legend = FALSE,
               color = "black", size = 2)
 
@@ -98,12 +102,13 @@ ppfd_leaf <- ggplot(data = (ppfd_df),
 tiff(filename = "Figure_5_PPFD_Temp_Regression.tiff",
      width = 1080, height = 720, units = "px",
      compression = "none")
-ggarrange(ppfd_leaf, ppfd_delta, labels = c("(a)", "(b)"),
-          legend = "bottom", common.legend = TRUE,
-          font.label = list(size = 28, face = "bold", color = "black",
-                            family = NULL),
-          hjust = -2.5, vjust = 1,
-          widths = c(1,1), heights = c(1,1))
+ppfd_graph <- ggarrange(ppfd_leaf, ppfd_delta, labels = c("(a)", "(b)"),
+                        legend = "bottom", common.legend = TRUE,
+                        font.label = list(size = 28, face = "bold", color = "black",
+                                          family = NULL),
+                        hjust = -2.5, vjust = 1,
+                        widths = c(1,1), heights = c(1,1))
+print(ppfd_graph)
 dev.off()
 
 #End of Script

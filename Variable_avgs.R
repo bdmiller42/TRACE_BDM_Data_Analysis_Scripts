@@ -19,6 +19,8 @@ library(dplyr)
 library(multcomp)
 library(broom)
 
+ok <- require("ggplot2"); if(!ok){install.packages('ggplot2')}
+
 #Input file
 data_master <- read.csv("SURF_data_master.csv", header = TRUE, sep = ",")
 
@@ -30,7 +32,7 @@ plot_name <- "Daily_Mean_Max"
 #Plot Labels
 plot_labels <- c(expression(Delta*"T"*" (°C)"), expression("T"["leaf"]*" (°C)"),
                  expression("T"["air"]*" (°C)"),
-                expression("PPFD "["umol/s/m"^"2"]), expression("Vapor Pressure Deficit (kPa)"))
+                expression("PPFD "*"("*"umol/s/m"^"2"*")"), expression("Vapor Pressure Deficit (kPa)"))
 
 # Sets variables to be averaged and maximized by day
 # ***VARIBLES MUST MATCH THE ORDER WITH THE ABOVE VECTOR****
@@ -145,10 +147,11 @@ daily_plot_function <- function(input_df, var_vector, lab_vector, test_stat) {
                   size = 10) +
         scale_shape_identity() +
         scale_x_reverse(breaks = c(1,2,3),
-        labels = c("Upper", "Middle", "Understory")) +
+        labels = c("Upper", "Middle", "Under")) +
         labs(y = lab_vector[i], x = "") +
         theme_classic() +
-        theme(text = element_text(size = 20))+
+        theme(text = element_text(size = 20),
+              axis.text = element_text(size = 20))+
         scale_fill_manual(values = c("#808080","#404040", "#C0C0C0")) +
         if (grepl("temp_c", var_vector[i])) {
           coord_flip(ylim = c(25,34))
