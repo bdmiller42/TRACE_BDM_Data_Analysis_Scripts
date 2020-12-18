@@ -1,7 +1,7 @@
 # Program Title: ANCOVA Analysis
 # Author: Benjamin D. Miller
 # Date Started: 20181121
-# Date Revised: 20190518
+# Date Revised: 20201218
 # Program Description: Performs ANCOVA Analysis for PPFD values grouped by
 # Top and Middle PAR measurements. Also performs ANCOVA analysis for canopy
 # leaf and air temperature grouped by Top-canopy, Understory and Mid-canopy.
